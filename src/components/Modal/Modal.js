@@ -6,14 +6,13 @@ export const Modal = ({ src, alt, toClose }) => {
   useEffect(() => {
     const handleEscClick = evt => {
       if (evt.code === 'Escape') {
-        // Додвти сюди useCallback
         toClose();
       }
     };
     window.addEventListener('keydown', handleEscClick);
 
     return () => window.removeEventListener('keydown', handleEscClick);
-  }, []);
+  }, [toClose]);
 
   const handleClickOnBackdrop = evt => {
     if (evt.currentTarget === evt.target) {

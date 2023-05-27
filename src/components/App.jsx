@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Searchbar } from './Searchbar/Searchbar';
@@ -7,35 +7,26 @@ import { getSearchImg } from '../api/api';
 import { Loader } from './Loader/Loader';
 import { Button } from './Button/Button';
 
-export class App extends Component {
-  state = {
-    search: '',
-    page: 1,
-    images: [],
-    loading: false,
-    error: '',
-    allPages: 0,
-  };
+export const App = () => {
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [allPages, setAllPages] = useState(0);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { search, page } = this.state;
-
+  useEffect(() => {
     if (search === '') {
-      toast.warning('Please, enter a search query');
+      return;
     }
-
-    if (prevState.search !== search || prevState.page !== page) {
+    async function fetch() {
       try {
-        this.setState({ loading: true });
+        setLoading(true);
         const { hits, totalHits } = await getSearchImg(search, page);
 
         if (hits.length === 0) {
           toast.error('Sorry there no image with this title');
           return;
-        }
-
-        if (page === 1) {
-          toast.info(`We have found ${totalHits} images`);
         }
 
         const filtredHits = hits.map(
@@ -44,51 +35,45 @@ export class App extends Component {
           }
         );
 
-        if (prevState.search !== search) {
-          return this.setState({ images: filtredHits });
+        if (page === 1) {
+          setImages(filtredHits);
+          setAllPages(Math.ceil(totalHits / 12));
+          toast.info(`We have found ${totalHits} images`);
         }
 
-        return this.setState({
-          images: [...prevState.images, ...filtredHits],
-          allPages: Math.ceil(totalHits / 12),
-        });
+        if (page > 1) {
+          setImages(prevState => [...prevState, ...filtredHits]);
+        }
       } catch (error) {
-        this.setState({ error: error.message });
+        setError(error.message);
         console.log(error);
       } finally {
-        this.setState({ loading: false });
+        setLoading(false);
       }
     }
-  }
+    fetch();
+  }, [page, search]);
 
-  handleSubmit = imgSearch => {
-    this.setState({
-      search: imgSearch.trim(),
-      images: [],
-      page: 1,
-    });
+  const handleSubmit = imgSearch => {
+    setSearch(imgSearch.trim());
+    setImages([]);
+    setPage(1);
   };
 
-  handleLoadMoreClick = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const handleLoadMoreClick = () => {
+    setPage(prevState => prevState + 1);
   };
 
-  render() {
-    const { images, error, loading, page, allPages } = this.state;
-    const { handleSubmit, handleLoadMoreClick } = this;
-    const isVisible = images.length >= 12 && page !== allPages;
+  const isVisible = images.length >= 12 && page !== allPages;
 
-    return (
-      <>
-        <Searchbar onSubmit={handleSubmit} />
-        {error && toast.error(error)}
-        {images.length > 0 && <ImageGallery images={images} />}
-        {loading && <Loader />}
-        {isVisible && <Button onClick={handleLoadMoreClick} />}
-        <ToastContainer autoClose={2000} />
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <Searchbar onSubmit={handleSubmit} />
+      {error && toast.error(error)}
+      {images.length > 0 && <ImageGallery images={images} />}
+      {loading && <Loader />}
+      {isVisible && <Button onClick={handleLoadMoreClick} />}
+      <ToastContainer autoClose={2000} pauseOnHover={false} />
+    </>
+  );
+};
