@@ -4,13 +4,13 @@ import css from './ImageGalleryItem.module.css';
 import { Modal } from 'components/Modal/Modal';
 
 export const ImageGalleryItem = ({ image }) => {
-  const [isOpen, setIsOPen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const { imageGalleryItem, imageGalleryItem_image } = css;
   const { webformatURL, tags, largeImageURL } = image;
 
   const toggleModal = () => {
-    setIsOPen(!isOpen);
+    setIsOpen(!isOpen);
   };
 
   return (
